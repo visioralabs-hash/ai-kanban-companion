@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
+import { X, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatMessage } from '@/types/kanban';
 import { streamChat } from '@/lib/chat';
+import { triggerBoardRefresh } from './KanbanBoard';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 
@@ -45,7 +46,11 @@ export function ChatPanel() {
       await streamChat({
         messages: [...messages, userMsg],
         onDelta: upsert,
-        onDone: () => setIsLoading(false),
+        onDone: () => {
+          setIsLoading(false);
+          // Refresh board in case AI made changes
+          triggerBoardRefresh();
+        },
       });
     } catch (e: any) {
       toast.error(e.message || 'Chat error');
@@ -73,7 +78,7 @@ export function ChatPanel() {
         </div>
         <div className="flex-1">
           <h3 className="font-display font-semibold text-sm">AI Assistant</h3>
-          <p className="text-[10px] text-muted-foreground">Knows your tasks</p>
+          <p className="text-[10px] text-muted-foreground">Can view & edit your tasks</p>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setOpen(false)}>
           <X className="h-4 w-4" />
@@ -86,7 +91,7 @@ export function ChatPanel() {
           <div className="text-center mt-16">
             <Sparkles className="h-8 w-8 text-primary/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">Ask me about your tasks!</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">I can see your board and help you stay organized</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">I can view, create, edit & delete tasks for you</p>
           </div>
         )}
         {messages.map((msg, i) => (

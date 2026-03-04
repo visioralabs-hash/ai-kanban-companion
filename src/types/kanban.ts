@@ -21,7 +21,7 @@ export interface ChatMessage {
 export const COLUMN_CONFIG: Record<TaskStatus, { label: string; colorClass: string }> = {
   todo: { label: 'To Do', colorClass: 'bg-column-todo' },
   in_progress: { label: 'In Progress', colorClass: 'bg-column-progress' },
-  done: { label: 'Done', colorClass: 'bg-column-done' },
+  done: { label: 'Complete', colorClass: 'bg-column-done' },
 };
 
 export const PRIORITY_CONFIG: Record<TaskPriority, { label: string; colorClass: string }> = {
