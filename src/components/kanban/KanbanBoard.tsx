@@ -17,8 +17,23 @@ import { KanbanColumn } from './KanbanColumn';
 import { AddTaskDialog } from './AddTaskDialog';
 import { TaskCard } from './TaskCard';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done'];
+
+function fireConfetti() {
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { y: 0.7 },
+    colors: ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#14b8a6'],
+  });
+}
+
+// Global refresh callback for AI panel
+let _refreshCallback: (() => void) | null = null;
+export function registerBoardRefresh(cb: () => void) { _refreshCallback = cb; }
+export function triggerBoardRefresh() { _refreshCallback?.(); }
 
 export function KanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -43,6 +58,7 @@ export function KanbanBoard() {
   }, []);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
+  useEffect(() => { registerBoardRefresh(loadTasks); return () => { _refreshCallback = null; }; }, [loadTasks]);
 
   const getColumnTasks = (status: TaskStatus) =>
     tasks.filter(t => t.status === status).sort((a, b) => a.position - b.position);
@@ -87,7 +103,6 @@ export function KanbanBoard() {
     const activeItem = tasks.find(t => t.id === activeId);
     if (!activeItem) return;
 
-    // Check if dropping over a column
     const isOverColumn = STATUSES.includes(overId as TaskStatus);
     const overItem = tasks.find(t => t.id === overId);
 
@@ -100,6 +115,7 @@ export function KanbanBoard() {
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    const draggedTask = activeTask;
     setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
@@ -111,6 +127,11 @@ export function KanbanBoard() {
     const overId = over.id as string;
     const isOverColumn = STATUSES.includes(overId as TaskStatus);
     const targetStatus = isOverColumn ? (overId as TaskStatus) : tasks.find(t => t.id === overId)?.status ?? activeItem.status;
+
+    // 🎉 Confetti when moving to "done" (Complete)
+    if (targetStatus === 'done' && draggedTask && draggedTask.status !== 'done') {
+      fireConfetti();
+    }
 
     // Reorder within column
     const columnTasks = getColumnTasks(targetStatus);
